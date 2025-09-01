@@ -1,162 +1,126 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="it">
 <head>
-    <link href="main.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queen's Path</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
-    <div class="main">
-        <div>
-            <h2 id="title">100 game</h2>
+
+    <!-- Schermata di Benvenuto -->
+    <div id="welcome-screen">
+        <div class="welcome-container">
+            <h1>Queen's Path</h1>
+            <div id="welcome-content">
+                <div id="main-menu">
+                    <button class="welcome-btn" id="play-btn">Play</button>
+                    <button class="welcome-btn" id="rules-btn">Rules</button>
+                    <button class="welcome-btn" id="about-btn">About</button>
+                </div>
+                <div id="rules-panel" class="info-panel hidden">
+                    <h2>Regole del Gioco</h2>
+                    <p>Lo scopo è riempire la griglia 10x10 con i numeri da 1 a 100.</p>
+                    <p>Dopo aver posizionato un numero, la mossa successiva deve seguire un percorso specifico: salta due caselle in orizzontale o verticale (Nord, Sud, Est, Ovest), oppure salta una casella in diagonale.</p>
+                    <p>Il gioco finisce quando la griglia è completa (vittoria) o quando non ci sono più mosse legali disponibili (sconfitta).</p>
+                    <button class="welcome-btn back-btn">Indietro</button>
+                </div>
+                <div id="about-panel" class="info-panel hidden">
+                    <h2>About</h2>
+                    <p>Questo gioco è stato creato come un esperimento interattivo, combinando la logica di un puzzle numerico con le mosse non convenzionali ispirate ai pezzi degli scacchi.</p>
+                    <p>Sviluppato con HTML, CSS e JavaScript per essere leggero e accessibile su qualsiasi dispositivo.</p>
+                    <button class="welcome-btn back-btn">Indietro</button>
+                </div>
+            </div>
+            <footer>
+                <p>Creato da Mario Rossi</p>
+            </footer>
         </div>
-        <div>
-            <h2 id="time">Time</h2>
-        </div>
-
-        <table id="table">
-            <tr id="row0">
-                <td id="0" onclick="input(this.id)"></td>
-                <td id="1" onclick="input(this.id)"></td>
-                <td id="2" onclick="input(this.id)"></td>
-                <td id="3" onclick="input(this.id)"></td>
-                <td id="4" onclick="input(this.id)"></td>
-                <td id="5" onclick="input(this.id)"></td>
-                <td id="6" onclick="input(this.id)"></td>
-                <td id="7" onclick="input(this.id)"></td>
-                <td id="8" onclick="input(this.id)"></td>
-                <td id="9" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row1">
-                <td id="10" onclick="input(this.id)"></td>
-                <td id="11" onclick="input(this.id)"></td>
-                <td id="12" onclick="input(this.id)"></td>
-                <td id="13" onclick="input(this.id)"></td>
-                <td id="14" onclick="input(this.id)"></td>
-                <td id="15" onclick="input(this.id)"></td>
-                <td id="16" onclick="input(this.id)"></td>
-                <td id="17" onclick="input(this.id)"></td>
-                <td id="18" onclick="input(this.id)"></td>
-                <td id="19" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row2">
-                <td id="20" onclick="input(this.id)"></td>
-                <td id="21" onclick="input(this.id)"></td>
-                <td id="22" onclick="input(this.id)"></td>
-                <td id="23" onclick="input(this.id)"></td>
-                <td id="24" onclick="input(this.id)"></td>
-                <td id="25" onclick="input(this.id)"></td>
-                <td id="26" onclick="input(this.id)"></td>
-                <td id="27" onclick="input(this.id)"></td>
-                <td id="28" onclick="input(this.id)"></td>
-                <td id="29" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row3">
-                
-                <td id="30" onclick="input(this.id)"></td>
-                <td id="31" onclick="input(this.id)"></td>
-                <td id="32" onclick="input(this.id)"></td>
-                <td id="33" onclick="input(this.id)"></td>
-                <td id="34" onclick="input(this.id)"></td>
-                <td id="35" onclick="input(this.id)"></td>
-                <td id="36" onclick="input(this.id)"></td>
-                <td id="37" onclick="input(this.id)"></td>
-                <td id="38" onclick="input(this.id)"></td>
-                <td id="39" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row4">
-                
-                <td id="40" onclick="input(this.id)"></td>
-                <td id="41" onclick="input(this.id)"></td>
-                <td id="42" onclick="input(this.id)"></td>
-                <td id="43" onclick="input(this.id)"></td>
-                <td id="44" onclick="input(this.id)"></td>
-                <td id="45" onclick="input(this.id)"></td>
-                <td id="46" onclick="input(this.id)"></td>
-                <td id="47" onclick="input(this.id)"></td>
-                <td id="48" onclick="input(this.id)"></td>
-                <td id="49" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row5">
-               
-                <td id="50" onclick="input(this.id)"></td>
-                <td id="51" onclick="input(this.id)"></td>
-                <td id="52" onclick="input(this.id)"></td>
-                <td id="53" onclick="input(this.id)"></td>
-                <td id="54" onclick="input(this.id)"></td>
-                <td id="55" onclick="input(this.id)"></td>
-                <td id="56" onclick="input(this.id)"></td>
-                <td id="57" onclick="input(this.id)"></td>
-                <td id="58" onclick="input(this.id)"></td>
-                <td id="59" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row6">
-                
-                <td id="60" onclick="input(this.id)"></td>
-                <td id="61" onclick="input(this.id)"></td>
-                <td id="62" onclick="input(this.id)"></td>
-                <td id="63" onclick="input(this.id)"></td>
-                <td id="64" onclick="input(this.id)"></td>
-                <td id="65" onclick="input(this.id)"></td>
-                <td id="66" onclick="input(this.id)"></td>
-                <td id="67" onclick="input(this.id)"></td>
-                <td id="68" onclick="input(this.id)"></td>
-                <td id="69" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row7">
-                
-                <td id="70" onclick="input(this.id)"></td>
-                <td id="71" onclick="input(this.id)"></td>
-                <td id="72" onclick="input(this.id)"></td>
-                <td id="73" onclick="input(this.id)"></td>
-                <td id="74" onclick="input(this.id)"></td>
-                <td id="75" onclick="input(this.id)"></td>
-                <td id="76" onclick="input(this.id)"></td>
-                <td id="77" onclick="input(this.id)"></td>
-                <td id="78" onclick="input(this.id)"></td>
-                <td id="79" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row8">
-                <td id="80" onclick="input(this.id)"></td>
-                <td id="81" onclick="input(this.id)"></td>
-                <td id="82" onclick="input(this.id)"></td>
-                <td id="83" onclick="input(this.id)"></td>
-                <td id="84" onclick="input(this.id)"></td>
-                <td id="85" onclick="input(this.id)"></td>
-                <td id="86" onclick="input(this.id)"></td>
-                <td id="87" onclick="input(this.id)"></td>
-                <td id="88" onclick="input(this.id)"></td>
-                <td id="89" onclick="input(this.id)"></td>
-            </tr>
-
-            <tr id="row9">
-                <td id="90" onclick="input(this.id)"></td>
-                <td id="91" onclick="input(this.id)"></td>
-                <td id="92" onclick="input(this.id)"></td>
-                <td id="93" onclick="input(this.id)"></td>
-                <td id="94" onclick="input(this.id)"></td>
-                <td id="95" onclick="input(this.id)"></td>
-                <td id="96" onclick="input(this.id)"></td>
-                <td id="97" onclick="input(this.id)"></td>
-                <td id="98" onclick="input(this.id)"></td>
-                <td id="99" onclick="input(this.id)"></td>
-            </tr>
-        </table><br><br>
-
-        <br><br>
-
-        <footer>
-            <span>Copyright &#xa9 - <a href="https://www.sudoku.com">sudoku</a></span>
-        </footer>
     </div>
-    <script src=" main2.js"></script>
-</body>
 
+    <!-- Layout Principale del Gioco -->
+    <div class="main-layout">
+        <div class="game-container">
+            <header class="game-header">
+                <h1>Queen's Path</h1>
+                <div class="stats-container">
+                    <div class="stat-box">
+                        <span class="stat-label">Score</span>
+                        <span id="score">0</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Time</span>
+                        <span id="timer">00:00</span>
+                    </div>
+                     <div class="stat-box">
+                        <span class="stat-label">Multiplier</span>
+                        <span id="multiplier">x10</span>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button id="undo-btn" title="Annulla l'ultima mossa (1 possibilità)">Undo</button>
+                    <button id="pause-btn">Pausa</button>
+                    <button id="options-btn">Opzioni</button>
+                    <button id="new-game-btn">Nuova Partita</button>
+                </div>
+            </header>
+
+            <main class="game-board-container">
+                <div id="game-board"></div>
+                <p id="game-instructions">Clicca su una cella per iniziare posizionando il numero 1.</p>
+            </main>
+        </div>
+
+        <aside class="sidebar">
+            <h2>Cronologia Partite</h2>
+            <div id="history-list">
+                <p>Le tue partite passate appariranno qui.</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <div id="game-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <p id="modal-text"></p>
+            <button id="modal-button"></button>
+        </div>
+    </div>
+    <div id="options-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Opzioni</h2>
+            <div class="options-grid">
+                <label>Modalità di Gioco</label>
+                <div class="option-control">
+                    <button class="option-toggle active" data-option="playMode" data-value="click">Click</button>
+                    <button class="option-toggle" data-option="playMode" data-value="hover">Hover</button>
+                </div>
+                <label for="assist-toggle">Celle Assistite</label>
+                <div class="option-control">
+                     <label class="switch">
+                        <input type="checkbox" id="assist-toggle" data-option="showAssistedCells" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <label for="sound-toggle">Suono</label>
+                <div class="option-control">
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" data-option="soundEnabled" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <button id="options-close-btn">Chiudi</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOADING -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <script src="script.js"></script>
+</body>
 </html>
+

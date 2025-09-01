@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             placeNumber(cell, row, col);
             startTimer();
             instructionsElement.style.display = 'none';
+            boardElement.classList.remove('start-mode');
         } 
         else if (currentNumber > 1 && isMoveLegal(row, col)) {
             placeNumber(cell, row, col);
@@ -372,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadSettings() {
         const savedSettings = JSON.parse(localStorage.getItem('knightsPathSettings'));
         if (savedSettings) { settings = savedSettings; }
-        settings.playMode = 'click';
+        settings.playMode = 'hover'; // change to "click" se vuoi partire in modalità click
         applySettings();
     }
     function saveSettings() { localStorage.setItem('knightsPathSettings', JSON.stringify(settings)); }
@@ -416,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pauseBtn.textContent = 'Pausa';
         undoBtn.disabled = true;
         hideModal();
+        boardElement.classList.add('start-mode');
     }
     
     init();

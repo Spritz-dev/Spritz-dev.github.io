@@ -12,6 +12,7 @@
     --text-light: #f9f6f2;
     --accent-color: #8b5cf6;
     --modal-bg: rgba(0, 0, 0, 0.7);
+    --trail-color: rgba(139, 92, 246, 0.7);
 }
 
 body {
@@ -25,6 +26,8 @@ body {
     margin: 0;
     padding: 24px;
     box-sizing: border-box;
+    /* Evita lo scroll su mobile */
+    overflow: hidden;
 }
 
 #game-board.start-mode .cell {
@@ -105,23 +108,15 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 .cell.legal { background-color: var(--cell-legal-bg); cursor: pointer; }
 .cell.occupied { background-color: var(--cell-occupied-bg); cursor: default; }
 .cell.illegal-occupied { background-color: var(--cell-illegal-occupied-bg); cursor: default; }
-.cell.undoable { cursor: pointer; box-shadow: 0 0 10px var(--accent-color); }
 .cell.challenge-goal { background-color: var(--cell-challenge-bg); }
-.cell.challenge-path { background-color: var(--cell-challenge-path-bg); } /* NUOVA CLASSE */
+.cell.challenge-path { background-color: var(--cell-challenge-path-bg); }
 .cell.placed span { animation: flip 0.5s ease-out; }
 
 /* STILE PER LA CELLA SFIDA */
 .challenge-marker {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 8px;
-    height: 8px;
-    background-color: var(--accent-color);
-    border-radius: 50%;
-    box-shadow: 0 0 5px white;
+    position: absolute; top: 2px; right: 2px; width: 8px; height: 8px;
+    background-color: var(--accent-color); border-radius: 50%; box-shadow: 0 0 5px white;
 }
-
 @keyframes flip { 0% { transform: scale(1) rotateY(0deg); } 50% { transform: scale(1.1) rotateY(90deg); color: var(--accent-color); } 100% { transform: scale(1) rotateY(0deg); } }
 
 /* --- MODALS --- */
@@ -144,3 +139,13 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 input:checked + .slider { background-color: var(--accent-color); }
 input:checked + .slider:before { transform: translateX(26px); }
 
+/* NUOVO: Stile per il canvas della traccia */
+#trail-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none; /* Fondamentale per non bloccare i click */
+    z-index: 999;
+}

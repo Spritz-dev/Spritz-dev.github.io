@@ -33,10 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const optionsModal = document.getElementById('options-modal');
     const optionsCloseBtn = document.getElementById('options-close-btn');
 
+    // NUOVO: Elementi per la traccia
+    const trailCanvas = document.getElementById('trail-canvas');
+    const ctx = trailCanvas.getContext('2d');
+    let trailPoints = [];
+
     // --- COSTANTI DI GIOCO ---
     const GRID_SIZE = 10;
-    // Modifica questo valore per decidere quante mosse prima della sfida visualizzare l'aiuto.
-    // 0 = solo alla mossa esatta, 5 = 5 mosse prima, 100 = sempre visibile.
     const CHALLENGE_HELP_LOOKAHEAD = 5;
 
     // --- STATO GIOCO ---
@@ -57,9 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let streakCounter = 0;
     let lastMoveTimestamp = 0;
     let lastUndoneIndex = null;
-    let gameMode = 'free'; // 'free' or 'challenge'
-    let challengeGoal = null; // { number, row, col }
-    let challengePathAchieved = false; // NUOVO: Flag per tracciare se l'aiuto è stato usato
+    let gameMode = 'free';
+    let challengeGoal = null;
+    let challengePathAchieved = false;
 
     // --- IMPOSTAZIONI ---
     let settings = {
@@ -77,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resetGameState();
         addEventListeners();
         loadGameHistory();
+        setupTrailCanvas();
+        requestAnimationFrame(drawTrail); // Avvia il ciclo di disegno
     }
 
     function setupWelcomeScreenListeners() {
@@ -92,10 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // NUOVO: Funzione per impostare il canvas della traccia
+    function setupTrailCanvas() {
+        trailCanvas.width = window.innerWidth;
+        trailCanvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            trailCanvas.width = window.innerWidth;
+            trailCanvas.height = window.innerHeight;
+        });
+    }
     
     function startGame(mode) {
         gameMode = mode;
-        resetGameState(); // Resetta prima di iniziare
+        resetGameState();
         if(gameMode === 'challenge') {
             setupDailyChallenge();
             gameTitleElement.textContent = "Daily Challenge";
@@ -119,8 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function addEventListeners() {
         boardElement.addEventListener('click', handleCellClick);
-        boardElement.addEventListener('mouseover', handleCellMouseOver);
+        // RIMOSSO: handleCellMouseOver dal boardElement
         boardElement.addEventListener('mouseout', handleCellMouseOut);
+        
+        // NUOVO: Listeners globali per mouse e touch per la traccia e la modalità hover
+        document.addEventListener('mousemove', handlePointerMove);
+        document.addEventListener('touchmove', handlePointerMove, { passive: false });
+        
         newGameBtn.addEventListener('click', () => {
              welcomeScreen.classList.remove('fade-out');
              resetGameState();
@@ -135,10 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isGameOver || isPaused) return;
         const cell = e.target.closest('.cell');
         if (!cell) return;
-        if (cell.classList.contains('undoable')) {
-            undoMove();
-            return;
-        }
         if (currentNumber === 1 && gameMode === 'free') {
             processMove(cell);
             return;
@@ -148,9 +164,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleCellMouseOver(e) {
-        if (settings.playMode === 'click' || isGameOver || isPaused || currentNumber === 1) return;
-        const cell = e.target.closest('.cell');
+    // NUOVO: Gestore unificato per mouse e touch
+    function handlePointerMove(e) {
+        // Previene lo scroll su touch
+        if (e.type === 'touchmove') {
+            e.preventDefault();
+        }
+
+        // Ottiene le coordinate
+        const touch = e.touches ? e.touches[0] : null;
+        const x = touch ? touch.clientX : e.clientX;
+        const y = touch ? touch.clientY : e.clientY;
+
+        // Aggiunge punti per la traccia
+        trailPoints.push({ x, y, life: 20 });
+
+        // Logica per la modalità hover/trascinamento
+        if (settings.playMode !== 'hover' || isGameOver || isPaused || currentNumber === 1) return;
+        
+        const targetElement = document.elementFromPoint(x, y);
+        const cell = targetElement ? targetElement.closest('.cell') : null;
+        
         if (cell && cell.dataset.index == lastUndoneIndex) { return; }
         if (cell) { processMove(cell); }
     }
@@ -166,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const col = index % GRID_SIZE;
         if (currentNumber === 1 && gameMode === 'free' && grid[row][col] === 0) {
             if (settings.soundEnabled && typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
-                Tone.start().catch(e => console.error("Tone.start() failed:", e));
+                Tone.start().catch(err => console.error("Tone.start() failed:", err));
             }
             placeNumber(cell, row, col);
             startTimer();
@@ -185,32 +219,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function placeNumber(cell, row, col) {
-        const oldUndoable = boardElement.querySelector('.undoable');
-        if (oldUndoable) oldUndoable.classList.remove('undoable');
-
-        // Salva lo stato PRIMA di modificarlo
         gameHistory.push({ grid: JSON.parse(JSON.stringify(grid)), currentNumber, lastPosition, score, challengeGoal, challengePathAchieved });
-
-        // NUOVO: Se la mossa è su una cella di aiuto, imposta il flag
-        if (cell.classList.contains('challenge-path')) {
-            challengePathAchieved = true;
-        }
-
+        if (cell.classList.contains('challenge-path')) { challengePathAchieved = true; }
         score += currentNumber * multiplier;
         updateScoreDisplay();
         grid[row][col] = currentNumber;
         cell.innerHTML = `<span>${currentNumber}</span>`;
-        cell.classList.add('occupied');
-        cell.classList.remove('placed');
-        void cell.offsetWidth;
-        cell.classList.add('placed');
+        cell.classList.add('occupied', 'placed');
         playSound();
         lastPosition = { row, col };
         currentNumber++;
-        if (undoChances > 0) {
-            undoBtn.disabled = false;
-            cell.classList.add('undoable');
-        }
+        if (undoChances > 0) { undoBtn.disabled = false; }
         updateVisualsAfterMove();
         checkGameState();
     }
@@ -220,33 +239,29 @@ document.addEventListener('DOMContentLoaded', () => {
             endGame('Vittoria!', `Hai completato la griglia in ${timerElement.textContent} con un punteggio di ${score}!`);
             return;
         }
-
         if (lastPosition) {
             const moves = getLegalMoves(lastPosition.row, lastPosition.col);
-
             if (gameMode === 'challenge' && currentNumber === challengeGoal.number) {
                 const canReachGoal = moves.legal.some(m => m.row === challengeGoal.row && m.col === challengeGoal.col);
-                
                 if (canReachGoal) {
                     const goalCellElement = boardElement.children[challengeGoal.row * GRID_SIZE + challengeGoal.col];
                     boardElement.style.pointerEvents = 'none';
                     setTimeout(() => {
-                        goalCellElement.classList.remove('challenge-goal', 'challenge-path');
                         if(goalCellElement.querySelector('.challenge-marker')) {
                            goalCellElement.querySelector('.challenge-marker').remove();
                         }
+                        goalCellElement.classList.remove('challenge-goal', 'challenge-path');
                         placeNumber(goalCellElement, challengeGoal.row, challengeGoal.col);
                         boardElement.style.pointerEvents = 'auto';
                     }, 400);
                     return;
                 } else {
-                    endGame('Sfida Fallita!', `Non puoi raggiungere il numero ${challengeGoal.number} dalla tua posizione attuale. Punteggio: ${score}.`);
+                    endGame('Sfida Fallita!', `Non puoi raggiungere il numero ${challengeGoal.number}. Punteggio: ${score}.`);
                     return;
                 }
             }
-
             if (moves.legal.length === 0) {
-                endGame('Sconfitta!', `Sei arrivato al numero ${currentNumber - 1}. Non ci sono più mosse. Punteggio: ${score}.`);
+                endGame('Sconfitta!', `Sei arrivato al numero ${currentNumber - 1}. Punteggio: ${score}.`);
             }
         }
     }
@@ -316,33 +331,53 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.cell.legal, .cell.illegal-occupied, .cell.challenge-path').forEach(c => {
             c.classList.remove('legal', 'illegal-occupied', 'challenge-path');
         });
-
         if (!lastPosition) return;
-        
         const moves = getLegalMoves(lastPosition.row, lastPosition.col);
         if (settings.showAssistedCells) {
             moves.legal.forEach(move => {
-                const cell = boardElement.children[move.row * GRID_SIZE + move.col];
-                cell.classList.add('legal');
+                boardElement.children[move.row * GRID_SIZE + move.col].classList.add('legal');
             });
         }
         moves.illegalOccupied.forEach(move => {
-            const cell = boardElement.children[move.row * GRID_SIZE + move.col];
-            cell.classList.add('illegal-occupied');
+            boardElement.children[move.row * GRID_SIZE + move.col].classList.add('illegal-occupied');
         });
-
-        // MODIFICATO: Mostra l'aiuto solo se non è stato ancora raggiunto il percorso
         if (gameMode === 'challenge' && challengeGoal && !challengePathAchieved && currentNumber >= challengeGoal.number - CHALLENGE_HELP_LOOKAHEAD) {
             highlightChallengePaths();
         }
+    }
+
+    // NUOVO: Funzione per disegnare la traccia
+    function drawTrail() {
+        ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+        
+        for (let i = 0; i < trailPoints.length; i++) {
+            const point = trailPoints[i];
+            point.life--;
+            if (point.life <= 0) {
+                trailPoints.splice(i, 1);
+                i--;
+                continue;
+            }
+
+            if (i > 0) {
+                const prevPoint = trailPoints[i - 1];
+                ctx.beginPath();
+                ctx.moveTo(prevPoint.x, prevPoint.y);
+                ctx.lineTo(point.x, point.y);
+                ctx.strokeStyle = `rgba(139, 92, 246, ${0.5 * (point.life / 20)})`;
+                ctx.lineWidth = 5 + (point.life / 10);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+            }
+        }
+        requestAnimationFrame(drawTrail);
     }
     
     function endGame(title, text) {
         isGameOver = true;
         stopTimer();
         undoBtn.disabled = true;
-        const oldUndoable = boardElement.querySelector('.undoable');
-        if (oldUndoable) oldUndoable.classList.remove('undoable');
         saveGameResult();
         loadGameHistory();
         showModal(title, text, 'Menu Principale', () => {
@@ -360,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lastPosition = prevState.lastPosition;
         score = prevState.score;
         challengeGoal = prevState.challengeGoal;
-        challengePathAchieved = prevState.challengePathAchieved; // Ripristina lo stato dell'aiuto
+        challengePathAchieved = prevState.challengePathAchieved;
         undoChances--;
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
@@ -388,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
         score = 0; multiplier = 10; elapsedTimeBeforePause = 0; gameHistory = []; undoChances = 1;
         lastUndoneIndex = null;
         challengeGoal = null;
-        challengePathAchieved = false; // Resetta il flag dell'aiuto
+        challengePathAchieved = false;
         stopTimer();
         timerElement.textContent = '00:00';
         updateScoreDisplay();

@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- COSTANTI DI GIOCO ---
     const GRID_SIZE = 10;
     const CHALLENGE_HELP_LOOKAHEAD = 5;
+    // MODIFICA QUESTO VALORE per aumentare/diminuire l'area di tocco. 1.1 = 110% (10% più grande)
+    const LEGAL_CELL_TRIGGER_SCALE = 1.7;
 
     // --- STATO GIOCO ---
     let grid = [];
@@ -105,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', () => {
             trailCanvas.width = window.innerWidth;
             trailCanvas.height = window.innerHeight;
-            boardRect = boardElement.getBoundingClientRect(); // Ricalcola la posizione su resize
+            boardRect = boardElement.getBoundingClientRect();
         });
     }
     
@@ -121,10 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
             boardElement.classList.add('start-mode');
         }
         welcomeScreen.classList.add('fade-out');
-        // Ricalcola la posizione della griglia quando il gioco inizia
         setTimeout(() => {
             boardRect = boardElement.getBoundingClientRect();
-        }, 500); // Dopo la transizione
+        }, 500);
     }
 
     function createGrid() {
@@ -144,6 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mousemove', handlePointerMove);
         document.addEventListener('touchmove', handlePointerMove, { passive: false });
         
+        // NUOVO: Ricalcola la posizione della griglia all'inizio del tocco per precisione
+        document.addEventListener('touchstart', () => {
+            boardRect = boardElement.getBoundingClientRect();
+        }, { passive: true });
+
         newGameBtn.addEventListener('click', () => {
              welcomeScreen.classList.remove('fade-out');
              resetGameState();
@@ -167,6 +173,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // NUOVA FUNZIONE: Trova la cella target con tolleranza per l'area di tocco
+    function findTargetCell(x, y) {
+        // 1. Cerca prima tra le celle legali con un'area di tocco più grande
+        const legalCells = boardElement.querySelectorAll('.cell.legal');
+        for (const cell of legalCells) {
+            const rect = cell.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const width = rect.width * LEGAL_CELL_TRIGGER_SCALE;
+            const height = rect.height * LEGAL_CELL_TRIGGER_SCALE;
+            
+            if (x >= centerX - width / 2 && x <= centerX + width / 2 &&
+                y >= centerY - height / 2 && y <= centerY + height / 2) {
+                return cell;
+            }
+        }
+        
+        // 2. Fallback: trova l'elemento esatto sotto il puntatore per altri casi
+        const targetElement = document.elementFromPoint(x, y);
+        return targetElement ? targetElement.closest('.cell') : null;
+    }
+
     function handlePointerMove(e) {
         const touch = e.touches ? e.touches[0] : null;
         const x = touch ? touch.clientX : e.clientX;
@@ -174,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isInsideBoard = (x >= boardRect.left && x <= boardRect.right && y >= boardRect.top && y <= boardRect.bottom);
 
-        // Attiva la traccia e previene lo scroll SOLO se dentro la griglia
         if (isInsideBoard) {
             trailPoints.push({ x, y, life: 20 });
             if (e.type === 'touchmove') {
@@ -184,11 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (settings.playMode !== 'hover' || isGameOver || isPaused || currentNumber === 1) return;
         
-        // La logica hover/trascinamento funziona solo dentro la griglia
         if(isInsideBoard) {
-            const targetElement = document.elementFromPoint(x, y);
-            // .closest('.cell') funziona anche se l'elemento è lo pseudo-elemento ::before
-            const cell = targetElement ? targetElement.closest('.cell') : null; 
+            const cell = findTargetCell(x, y); // USA LA NUOVA FUNZIONE
             
             if (cell && cell.dataset.index == lastUndoneIndex) { return; }
             if (cell) { processMove(cell); }

@@ -13,6 +13,9 @@
     --accent-color: #8b5cf6;
     --modal-bg: rgba(0, 0, 0, 0.7);
     --trail-color: rgba(139, 92, 246, 0.7);
+    
+    /* MODIFICA QUESTO VALORE per aumentare/diminuire l'area di tocco delle celle legali. 1.1 = 110% (10% più grande) */
+    --cell-trigger-scale: 1.5;
 }
 
 body {
@@ -26,7 +29,6 @@ body {
     margin: 0;
     padding: 24px;
     box-sizing: border-box;
-    /* Evita lo scroll su mobile */
     overflow: hidden;
 }
 
@@ -106,6 +108,19 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 #game-instructions { text-align: center; margin-top: 10px; color: #555; }
 .cell { background-color: var(--cell-bg); border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: clamp(0.8rem, 2.5vw, 1.5rem); font-weight: bold; color: var(--text-dark); transition: all 0.3s; user-select: none; min-width: 0; min-height: 0; overflow: hidden; position: relative; }
 .cell.legal { background-color: var(--cell-legal-bg); cursor: pointer; }
+
+/* NUOVO: Area di trigger più grande per le celle legali */
+.cell.legal::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(100% * var(--cell-trigger-scale));
+    height: calc(100% * var(--cell-trigger-scale));
+    transform: translate(-50%, -50%);
+    z-index: 1; /* Assicura che sia sopra la cella stessa */
+}
+
 .cell.occupied { background-color: var(--cell-occupied-bg); cursor: default; }
 .cell.illegal-occupied { background-color: var(--cell-illegal-occupied-bg); cursor: default; }
 .cell.challenge-goal { background-color: var(--cell-challenge-bg); }
@@ -139,7 +154,7 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
 input:checked + .slider { background-color: var(--accent-color); }
 input:checked + .slider:before { transform: translateX(26px); }
 
-/* NUOVO: Stile per il canvas della traccia */
+/* Stile per il canvas della traccia */
 #trail-canvas {
     position: fixed;
     top: 0;
@@ -149,3 +164,4 @@ input:checked + .slider:before { transform: translateX(26px); }
     pointer-events: none; /* Fondamentale per non bloccare i click */
     z-index: 999;
 }
+

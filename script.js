@@ -33,10 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const optionsModal = document.getElementById('options-modal');
     const optionsCloseBtn = document.getElementById('options-close-btn');
 
-    // NUOVO: Elementi per la traccia
+    // Elementi per la traccia
     const trailCanvas = document.getElementById('trail-canvas');
     const ctx = trailCanvas.getContext('2d');
     let trailPoints = [];
+    let boardRect = boardElement.getBoundingClientRect(); // Posizione della griglia
 
     // --- COSTANTI DI GIOCO ---
     const GRID_SIZE = 10;
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addEventListeners();
         loadGameHistory();
         setupTrailCanvas();
-        requestAnimationFrame(drawTrail); // Avvia il ciclo di disegno
+        requestAnimationFrame(drawTrail);
     }
 
     function setupWelcomeScreenListeners() {
@@ -98,13 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // NUOVO: Funzione per impostare il canvas della traccia
     function setupTrailCanvas() {
         trailCanvas.width = window.innerWidth;
         trailCanvas.height = window.innerHeight;
         window.addEventListener('resize', () => {
             trailCanvas.width = window.innerWidth;
             trailCanvas.height = window.innerHeight;
+            boardRect = boardElement.getBoundingClientRect(); // Ricalcola la posizione su resize
         });
     }
     
@@ -120,6 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
             boardElement.classList.add('start-mode');
         }
         welcomeScreen.classList.add('fade-out');
+        // Ricalcola la posizione della griglia quando il gioco inizia
+        setTimeout(() => {
+            boardRect = boardElement.getBoundingClientRect();
+        }, 500); // Dopo la transizione
     }
 
     function createGrid() {
@@ -134,10 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function addEventListeners() {
         boardElement.addEventListener('click', handleCellClick);
-        // RIMOSSO: handleCellMouseOver dal boardElement
         boardElement.addEventListener('mouseout', handleCellMouseOut);
         
-        // NUOVO: Listeners globali per mouse e touch per la traccia e la modalità hover
         document.addEventListener('mousemove', handlePointerMove);
         document.addEventListener('touchmove', handlePointerMove, { passive: false });
         
@@ -146,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
              resetGameState();
         });
         pauseBtn.addEventListener('click', togglePause);
-        optionsBtn.addEventListener('click', () => optionsModal.classList.remove('hidden'));
+        optionsBtn.addEventListener('click', () => optionsModal.classList.add('hidden'));
         undoBtn.addEventListener('click', undoMove);
     }
 
@@ -164,29 +167,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // NUOVO: Gestore unificato per mouse e touch
     function handlePointerMove(e) {
-        // Previene lo scroll su touch
-        if (e.type === 'touchmove') {
-            e.preventDefault();
-        }
-
-        // Ottiene le coordinate
         const touch = e.touches ? e.touches[0] : null;
         const x = touch ? touch.clientX : e.clientX;
         const y = touch ? touch.clientY : e.clientY;
 
-        // Aggiunge punti per la traccia
-        trailPoints.push({ x, y, life: 20 });
+        const isInsideBoard = (x >= boardRect.left && x <= boardRect.right && y >= boardRect.top && y <= boardRect.bottom);
 
-        // Logica per la modalità hover/trascinamento
+        // Attiva la traccia e previene lo scroll SOLO se dentro la griglia
+        if (isInsideBoard) {
+            trailPoints.push({ x, y, life: 20 });
+            if (e.type === 'touchmove') {
+                e.preventDefault();
+            }
+        }
+
         if (settings.playMode !== 'hover' || isGameOver || isPaused || currentNumber === 1) return;
         
-        const targetElement = document.elementFromPoint(x, y);
-        const cell = targetElement ? targetElement.closest('.cell') : null;
-        
-        if (cell && cell.dataset.index == lastUndoneIndex) { return; }
-        if (cell) { processMove(cell); }
+        // La logica hover/trascinamento funziona solo dentro la griglia
+        if(isInsideBoard) {
+            const targetElement = document.elementFromPoint(x, y);
+            // .closest('.cell') funziona anche se l'elemento è lo pseudo-elemento ::before
+            const cell = targetElement ? targetElement.closest('.cell') : null; 
+            
+            if (cell && cell.dataset.index == lastUndoneIndex) { return; }
+            if (cell) { processMove(cell); }
+        }
     }
     
     function handleCellMouseOut(e) {
@@ -320,8 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fromCol = col - move.c;
             if (fromRow >= 0 && fromRow < GRID_SIZE && fromCol >= 0 && fromCol < GRID_SIZE) {
                 if (grid[fromRow][fromCol] === 0) {
-                    const cell = boardElement.children[fromRow * GRID_SIZE + fromCol];
-                    cell.classList.add('challenge-path');
+                    boardElement.children[fromRow * GRID_SIZE + fromCol].classList.add('challenge-path');
                 }
             }
         }
@@ -346,10 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // NUOVO: Funzione per disegnare la traccia
     function drawTrail() {
         ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
-        
         for (let i = 0; i < trailPoints.length; i++) {
             const point = trailPoints[i];
             point.life--;
@@ -358,7 +361,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 i--;
                 continue;
             }
-
             if (i > 0) {
                 const prevPoint = trailPoints[i - 1];
                 ctx.beginPath();
